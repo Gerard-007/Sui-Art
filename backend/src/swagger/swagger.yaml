@@ -1,0 +1,128 @@
+openapi: 3.0.0
+info:
+  title: SuiMark DApp API
+  version: 1.0.0
+paths:
+  /api/auth/nonce:
+    get:
+      summary: Generate zkLogin nonce
+      responses:
+        '200':
+          description: Nonce generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce: { type: string }
+  /api/auth/auth:
+    post:
+      summary: Authenticate with zkLogin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                zkProof: { type: string }
+                address: { type: string }
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  token: { type: string }
+                  isVerified: { type: boolean }
+                  isCollector: { type: boolean }
+                  redirectToOnboarding: { type: boolean }
+  /api/users/upload-onboarding:
+    post:
+      summary: Upload logo and trademark for Artist onboarding
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                address: { type: string }
+                logo: { type: string, format: binary }
+                trademark: { type: string, format: binary }
+      responses:
+        '200':
+          description: Onboarding completed
+  /api/users/profile:
+    put:
+      summary: Update user profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name: { type: string }
+                last_name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+                country: { type: string }
+                state: { type: string }
+                street: { type: string }
+                address: { type: string }
+      responses:
+        '200':
+          description: Profile updated
+  /api/properties/mint:
+    post:
+      summary: Mint a new Property (NFT)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                artist_id: { type: string }
+                type: { type: string }
+                creation_date: { type: integer }
+                media: { type: string }
+                cultural_narrative: { type: string }
+                signerKey: { type: string }
+      responses:
+        '200':
+          description: Property minted
+  /api/properties/user/{address}:
+    get:
+      summary: Get user's properties
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of properties
+  /api/marketplace/list:
+    post:
+      summary: List a property on the marketplace
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nftId: { type: string }
+                price: { type: number }
+                signerKey: { type: string }
+      responses:
+        '200':
+          description: Property listed
+  /api/marketplace:
+    get:
+      summary: Get marketplace listings
+      responses:
+        '200':
+          description: List of marketplace listings
