@@ -5,18 +5,17 @@ module nft_app::marketplace {
     use sui::balance::{Self, Balance};
     use std::string::{Self, String};
 
-    // Error codes
+   
     const EInsufficientPayment: u64 = 1;
     const ENotBuyer: u64 = 2;
     const ENotSeller: u64 = 3;
     const EAlreadyConfirmed: u64 = 4;
     const EInvalidQRCode: u64 = 5;
     
-    // Platform fee: 2.5% (250 basis points out of 10000)
+    
     const PLATFORM_FEE_BASIS_POINTS: u64 = 250;
     const BASIS_POINTS_DENOMINATOR: u64 = 10000;
 
-    // Marketplace listing with escrow functionality
     public struct DesignListing has key, store {
         id: UID,
         nft: ArtNFT,
@@ -26,7 +25,7 @@ module nft_app::marketplace {
         is_sold: bool,
     }
 
-    // Escrow object to hold payment until confirmation
+    // This is the escrow object to hold payment until the buyer confirms
     public struct EscrowPayment has key, store {
         id: UID,
         listing_id: ID,
@@ -39,14 +38,12 @@ module nft_app::marketplace {
         nft_transferred: bool,
     }
 
-    // Platform treasury for collecting fees
     public struct PlatformTreasury has key {
         id: UID,
         balance: Balance<SUI>,
         platform_address: address,
     }
 
-    // Initialize platform treasury (called once during deployment)
     fun init(ctx: &mut TxContext) {
         let treasury = PlatformTreasury {
             id: object::new(ctx),
@@ -56,7 +53,6 @@ module nft_app::marketplace {
         transfer::share_object(treasury);
     }
 
-    // Create a listing with QR code hash for authenticity
     public entry fun create_listing(
         nft: ArtNFT, 
         price: u64, 
@@ -78,7 +74,6 @@ module nft_app::marketplace {
         transfer::share_object(listing);
     }
     
-    // Purchase NFT - payment goes to escrow
     public entry fun purchase_nft(
         listing: &mut DesignListing, 
         payment: Coin<SUI>, 
@@ -106,7 +101,6 @@ module nft_app::marketplace {
         transfer::share_object(escrow);
     }
 
-    // Buyer confirms authenticity by providing QR code
     public entry fun confirm_authenticity(
         escrow: &mut EscrowPayment,
         qr_code: vector<u8>,
@@ -122,7 +116,6 @@ module nft_app::marketplace {
         escrow.authenticity_confirmed = true;
     }
 
-    // Transfer NFT to buyer after authenticity confirmation
     public entry fun transfer_nft_to_buyer(
         listing: &mut DesignListing,
         escrow: &mut EscrowPayment,
@@ -134,12 +127,9 @@ module nft_app::marketplace {
         
         escrow.nft_transferred = true;
         
-        // This would require updating the NFT module to support taking ownership
-        // For now, we'll emit an event indicating the NFT should be transferred
-        // In practice, you'd need a mechanism to extract the NFT from the listing
     }
 
-    // Release payment to seller and platform after authenticity confirmation
+    
     public entry fun release_payment(
         escrow: &mut EscrowPayment,
         treasury: &mut PlatformTreasury,
@@ -170,7 +160,6 @@ module nft_app::marketplace {
 
     }
 
-    // Platform can withdraw collected fees
     public entry fun withdraw_platform_fees(
         treasury: &mut PlatformTreasury,
         amount: u64,
@@ -183,7 +172,6 @@ module nft_app::marketplace {
         transfer::public_transfer(coin, treasury.platform_address);
     }
 
-    // Buyer can cancel if seller doesn't provide valid QR code (dispute resolution)
     public entry fun cancel_purchase(
         listing: &mut DesignListing,
         escrow: &mut EscrowPayment,
